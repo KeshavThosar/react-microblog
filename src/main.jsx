@@ -18,9 +18,9 @@ const router = createBrowserRouter([
   { path: '/login', element: <LoginPage action="login" />},
   { path: '/register', element: <LoginPage action="register" />},
   { path: '/profile', element: <ProfileSettings /> },
-  { path: '/blogs/new', element: <BlogPostForm mode="create" /> }, // 3
+  { path: '/blogs/new', element: <BlogPostForm mode="create" /> },
   { path: '/blogs/:blogId', element: <BlogPage /> },
-  { path: '/blogs/:blogId/edit', element: <BlogPostForm mode="edit" /> }, // 4
+  { path: '/blogs/:blogId/edit', element: <BlogPostForm mode="edit" /> },
 ]);
 
 createRoot(document.getElementById("root")).render(
