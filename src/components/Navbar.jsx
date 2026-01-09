@@ -1,21 +1,7 @@
-import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useFirebaseAppContext } from "../firebase-helper/hooks";
-import { useState } from "react";
-import { Link } from "react-router-dom";
 
 export default function Navbar() {
-  const { auth } = useFirebaseAppContext();
-  const [userLoggedIn, setUserLoggedIn] = useState(false);
-  const [uid, setUid] = useState("");
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      setUid(user.uid);
-      setUserLoggedIn(true);
-    } else {
-      setUserLoggedIn(false);
-    }
-  });
+  const { user, auth: { logout } } = useFirebaseAppContext();
 
   return (
     <nav className="bg-white shadow-md">
@@ -28,7 +14,7 @@ export default function Navbar() {
             >
               Home
             </a>
-            {userLoggedIn ? (
+            {user.loggedIn ? (
               <>
                 <a
                   href="/blogs/new"
@@ -37,7 +23,7 @@ export default function Navbar() {
                   Create New
                 </a>
                 <a
-                  href={`/?author=${uid}`}
+                  href={`/?author=${user.uid}`}
                   className="text-gray-600 hover:text-blue-600 transition-colors"
                 >
                   Your Posts
@@ -51,7 +37,7 @@ export default function Navbar() {
                 <a
                   href="#"
                   className="text-gray-600 hover:text-blue-600 transition-colors"
-                  onClick={() => signOut(auth)}
+                  onClick={() => logout()}
                 >
                   Log Out
                 </a>

@@ -1,34 +1,32 @@
 import { useState } from "react";
 import { useFirebaseAppContext } from "../firebase-helper/hooks";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { useNavigate } from "react-router";
 
-export default function RegisterForm(){
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [cnfPassword, setCnfPassword] = useState('');
-  const [error, setError] = useState('');
+export default function RegisterForm() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [cnfPassword, setCnfPassword] = useState("");
+  const [error, setError] = useState("");
   const { auth } = useFirebaseAppContext();
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if(password === cnfPassword) {
-      createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
-        updateProfile(userCredential.user, { displayName: name })
-        navigate('/');
-      }).catch((error) => {
-        if(error.message.includes("email-already-in-use")){
-          setError("User already exists with the email");
-        }else{
-          setError("Something went wrong");
-        }
-      })
+    if (password === cnfPassword) {
+      auth.register(name, email, password)
+        .then(() => navigate("/"))
+        .catch((error) => {
+          if (error.message.includes("email-already-in-use")) {
+            setError("User already exists with the email");
+          } else {
+            setError("Something went wrong");
+          }
+        });
     } else {
-      setError('Password not matching');
+      setError("Password not matching");
     }
-  }
+  };
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
@@ -84,9 +82,12 @@ export default function RegisterForm(){
         >
           Register
         </button>
-        { error.length > 0 && <p className="w-full px-4 py-2 border border-red-600 text-red-900 rounded-md">{error}</p> }
-
+        {error.length > 0 && (
+          <p className="w-full px-4 py-2 border border-red-600 text-red-900 rounded-md">
+            {error}
+          </p>
+        )}
       </form>
     </div>
   );
-};
+}

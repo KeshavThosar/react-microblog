@@ -1,6 +1,9 @@
-import { useState } from "react";
-import { useFirebaseAppContext } from "../firebase-helper/hooks";
-import { onAuthStateChanged } from "firebase/auth";
+import { useEffect, useState } from "react";
+import {
+  useAuthenticatedRoute,
+  useFirebaseAppContext,
+} from "../firebase-helper/hooks";
+
 import { useNavigate, useParams } from "react-router-dom";
 import {
   addDoc,
@@ -13,47 +16,55 @@ import {
 } from "firebase/firestore";
 
 export default function BlogPostForm({ mode }) {
-  const { auth, db } = useFirebaseAppContext();
+  
+  useAuthenticatedRoute();
+
+  const { auth, db, user } = useFirebaseAppContext();
   const { blogId } = useParams();
-
   const navigate = useNavigate();
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
 
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      if (mode == "edit") {
-        const docRef = doc(db, "blogs", blogId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const { author_uid, title:_title , content: _content } = docSnap.data();
-          if (author_uid != user.uid) {
-            navigate("/");
+  useEffect(() => {
+
+    async function fillBlogDetails() {
+      if (user.loggedIn) {
+        if (mode == "edit") {
+          const docRef = doc(db, "blogs", blogId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const {
+              author_uid,
+              title: _title,
+              content: _content,
+            } = docSnap.data();
+            if (author_uid != user.uid) {
+              navigate("/");
+            } else {
+              if (title.trim().length == 0) {
+                setTitle(_title);
+              }
+  
+              if (content.trim().length == 0) {
+                setContent(_content);
+              }
+            }
           } else {
-            if(title.trim().length == 0) {
-              setTitle(_title);
-            }
-
-            if(content.trim().length == 0) {
-              setContent(_content);
-            }
+            navigate("/not-found");
           }
-        } else {
-          navigate("/not-found");
         }
       }
-    } else {
-      navigate("/login");
     }
-  });
+    fillBlogDetails();
+  }, [user, title, content, blogId, db, mode, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!auth.currentUser) {
+    if (!user.loggedIn) {
       navigate("/login");
     }
 
-    const { uid: author_uid, displayName: author_name } = auth.currentUser;
+    const { uid: author_uid, displayName: author_name } = user;
     const published_on = serverTimestamp();
 
     if (mode == "create") {
@@ -70,17 +81,16 @@ export default function BlogPostForm({ mode }) {
     } else if (mode == "edit") {
       const docRef = doc(db, "blogs", blogId);
       const prevBlogPost = await getDoc(docRef);
-      if(prevBlogPost.exists()){
+      if (prevBlogPost.exists()) {
         await updateDoc(docRef, {
           title,
           content,
           published_on,
         });
         navigate(`/blogs/${blogId}`);
-      }else{
+      } else {
         navigate("/");
       }
-
     }
   };
 

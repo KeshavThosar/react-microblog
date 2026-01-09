@@ -1,50 +1,38 @@
-import { useNavigate } from "react-router";
-import { useFirebaseAppContext } from "../firebase-helper/hooks";
-import { useEffect, useState } from "react";
+
+import { useAuthenticatedRoute, useFirebaseAppContext } from "../firebase-helper/hooks";
+import { useState } from "react";
 import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
   updateEmail,
   updatePassword,
   updateProfile,
 } from "firebase/auth";
 
 export default function ProfileSettings() {
-  const { auth } = useFirebaseAppContext();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const { auth, user } = useFirebaseAppContext();
+  
+  useAuthenticatedRoute();
+  
+  const [name, setName] = useState(user.displayName);
+  const [email, setEmail] = useState(user.email);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  const navigate = useNavigate();
   
-  useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setName(user.displayName);
-        setEmail(user.email);
-      } else {
-        navigate("/");
-      }
-    });
-  }, [auth, navigate]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const currentUser = auth.currentUser;
       
-      await signInWithEmailAndPassword(auth, currentUser.email, confirmPassword);
-      if (email.length > 0 && email != currentUser.email)
-        await updateEmail(currentUser, email);
-        await signInWithEmailAndPassword(auth, email, confirmPassword);
-      if (name.length > 0 && name != currentUser.displayName)
-        await updateProfile(currentUser, { displayName: name });
+      await auth.login(user.email, confirmPassword);
+      
+      if (email.length > 0 && email != user.email)
+        await updateEmail(user, email);
+        await auth.login(email, confirmPassword);
+      if (name.length > 0 && name != user.displayName)
+        await updateProfile(user, { displayName: name });
       if (password.length > 0) {
-        await updatePassword(currentUser, password);
-        await signInWithEmailAndPassword(auth, currentUser.email, password);
+        await updatePassword(user, password);
+        await auth.login(user.email, password);
       }
       alert("Profile updated successfully");
       setShowLoginForm(false);

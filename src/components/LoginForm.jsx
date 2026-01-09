@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { useFirebaseAppContext } from "../firebase-helper/hooks";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router";
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { auth } = useFirebaseAppContext();
+  const { auth: { login } } = useFirebaseAppContext();
   const navigate = useNavigate();
   
   const handleSubmit = (e) => {
     e.preventDefault();
-    signInWithEmailAndPassword(auth, email, password).then(() => {
+    login(email, password).then(() => {
       navigate('/');
     }).catch((error) => {
         if(error.message.includes("auth/invalid-credential")) {
